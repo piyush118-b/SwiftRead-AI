@@ -1,0 +1,257 @@
+<html class="dark"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .filled-icon { font-variation-settings: 'FILL' 1; }
+        input[type="radio"]:checked {
+            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="flex flex-col min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="border-b border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-background-dark/50 backdrop-blur-md sticky top-0 z-50">
+<div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="bg-primary p-1.5 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-xl filled-icon">auto_stories</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight">ReaderPro</h1>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-sm font-medium text-primary underline underline-offset-8" href="#">Challenges</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Library</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Stats</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/50 p-1 rounded-full border border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-full text-xs font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined text-sm">speed</span>
+                            450 WPM
+                        </div>
+<div class="flex items-center gap-1.5 px-3 py-1.5 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined text-sm">timer</span>
+                            2:15
+                        </div>
+</div>
+<div class="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-primary/20 bg-cover bg-center" data-alt="User profile avatar circle" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCo9o_ekL_GYlzTulc6JsUEg8wLmHwn7Uyz3BDo-HbEVhpBKNf-onuLZWn8t_F7kt6dLV_b7X6VAPtaqYQaMQWeEYNNITLk12LdYjDJfhwzyGhizbadFpj5TBWTI4y7ers7wrqmWm_nKnNAbff4HlMZwLx1TpOVv9ESKetL9pOKx8C3nlGA9oIFSAyxzE58DoH-YRUE8rhE81288aIOnQrma3FLpXJy_2VeASuRqmrU9XhLMxsh5PeYYm8spsfwtxdnDghusbcd8x0')"></div>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto w-full px-6 py-8 flex flex-col lg:flex-row gap-8">
+<!-- Main Content Area -->
+<div class="flex-1 space-y-6">
+<!-- Session Success Header -->
+<div class="bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-xl p-8 text-center relative overflow-hidden">
+<div class="absolute -top-12 -right-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl"></div>
+<div class="flex flex-col items-center gap-4">
+<div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-white text-4xl filled-icon">emoji_events</span>
+</div>
+<div>
+<h2 class="text-3xl font-bold tracking-tight dark:text-white">Session Complete!</h2>
+<p class="text-slate-500 dark:text-slate-400 mt-1">Excellent pace. Now, prove your understanding.</p>
+</div>
+</div>
+</div>
+<!-- Quiz Card -->
+<div class="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+<div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">quiz</span>
+<h3 class="text-lg font-semibold">Comprehension Quiz</h3>
+</div>
+<span class="text-xs font-bold px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full">5 QUESTIONS</span>
+</div>
+<div class="p-8 space-y-10">
+<!-- Question 1 -->
+<div class="space-y-4">
+<h4 class="text-base font-medium leading-relaxed">1. What was the primary thesis regarding the economic shift mentioned in the second paragraph?</h4>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+<label class="flex items-center gap-4 px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-primary/50 cursor-pointer transition-all group has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+<input checked="" class="w-5 h-5 text-primary border-slate-300 focus:ring-primary dark:bg-slate-900" name="q1" type="radio"/>
+<span class="text-sm text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Decentralized finance scaling</span>
+</label>
+<label class="flex items-center gap-4 px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-primary/50 cursor-pointer transition-all group has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+<input class="w-5 h-5 text-primary border-slate-300 focus:ring-primary dark:bg-slate-900" name="q1" type="radio"/>
+<span class="text-sm text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Resource scarcity myths</span>
+</label>
+<label class="flex items-center gap-4 px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-primary/50 cursor-pointer transition-all group has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+<input class="w-5 h-5 text-primary border-slate-300 focus:ring-primary dark:bg-slate-900" name="q1" type="radio"/>
+<span class="text-sm text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Global supply chain fragility</span>
+</label>
+<label class="flex items-center gap-4 px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-primary/50 cursor-pointer transition-all group has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+<input class="w-5 h-5 text-primary border-slate-300 focus:ring-primary dark:bg-slate-900" name="q1" type="radio"/>
+<span class="text-sm text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Hyper-localization of labor</span>
+</label>
+</div>
+</div>
+<!-- Question 2 -->
+<div class="space-y-4">
+<h4 class="text-base font-medium leading-relaxed">2. Which technological disruption was identified as the 'catalyst' for the change?</h4>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+<label class="flex items-center gap-4 px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-primary/50 cursor-pointer transition-all group has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+<input class="w-5 h-5 text-primary border-slate-300 focus:ring-primary dark:bg-slate-900" name="q2" type="radio"/>
+<span class="text-sm text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Quantum encryption</span>
+</label>
+<label class="flex items-center gap-4 px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-primary/50 cursor-pointer transition-all group has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+<input class="w-5 h-5 text-primary border-slate-300 focus:ring-primary dark:bg-slate-900" name="q2" type="radio"/>
+<span class="text-sm text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Biometric authentication</span>
+</label>
+<label class="flex items-center gap-4 px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-primary/50 cursor-pointer transition-all group has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+<input checked="" class="w-5 h-5 text-primary border-slate-300 focus:ring-primary dark:bg-slate-900" name="q2" type="radio"/>
+<span class="text-sm text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Neural language models</span>
+</label>
+<label class="flex items-center gap-4 px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-primary/50 cursor-pointer transition-all group has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+<input class="w-5 h-5 text-primary border-slate-300 focus:ring-primary dark:bg-slate-900" name="q2" type="radio"/>
+<span class="text-sm text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Autonomous logistics</span>
+</label>
+</div>
+</div>
+<!-- Submit Section -->
+<div class="pt-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-2 text-slate-500 text-sm">
+<span class="material-symbols-outlined text-green-500 filled-icon">check_circle</span>
+                                Answers saved automatically
+                            </div>
+<button class="bg-primary hover:bg-primary/90 text-white font-bold py-3 px-10 rounded-full transition-transform active:scale-95 shadow-lg shadow-primary/20 flex items-center gap-2">
+                                Submit Results
+                                <span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar: Rankings -->
+<aside class="w-full lg:w-80 flex flex-col gap-6">
+<!-- Potential Points Card -->
+<div class="bg-primary rounded-xl p-6 text-white shadow-xl shadow-primary/20">
+<h4 class="text-sm font-bold uppercase tracking-widest opacity-80">Potential Score</h4>
+<div class="mt-4 flex items-baseline gap-2">
+<span class="text-4xl font-bold">1,250</span>
+<span class="text-sm opacity-80">pts</span>
+</div>
+<div class="mt-4 space-y-3">
+<div class="flex items-center justify-between text-xs">
+<span class="opacity-70">Speed Bonus</span>
+<span class="font-bold">+450</span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<span class="opacity-70">Accuracy (Est.)</span>
+<span class="font-bold">+800</span>
+</div>
+<div class="w-full bg-white/20 h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-white h-full w-3/4"></div>
+</div>
+</div>
+</div>
+<!-- Live Rankings Widget -->
+<div class="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col">
+<div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-500 filled-icon text-xl">leaderboard</span>
+<h3 class="font-bold text-sm">Live Rankings</h3>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+</span>
+<span class="text-[10px] font-bold uppercase text-slate-400">Live</span>
+</div>
+</div>
+<div class="p-2 flex flex-col gap-1">
+<!-- Ranking Item -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold w-4 text-center">1</span>
+<div class="w-8 h-8 rounded-full bg-cover bg-center" data-alt="Leaderboard user profile avatar" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD9P6HTH6ayw6U63QVtuzS-X-CvHeOitRdckl_TQHv8h6nT38EOKkxyF3nneG80mZuJT8I7hbbXg3gKiD7QrsNVsFYj4C1LCWDuTt36vE3FagCIAuKIh203n-_wkN5-MNJlpU6YswmPxw4xpJxlzgdPj7FCbFDrIF0kWwzw3Ip76Su_98qvXCfBhDdNMyhzBfKqHnBvAFhpsi5ZXtAD3y3COutwE8ExR2Jz4XBCbK3rZl3h0LUCOfB_jMukv2dbLsfwyT0zyAvldTs')"></div>
+<div class="flex flex-col">
+<span class="text-xs font-bold">Alex Chen</span>
+<span class="text-[10px] text-slate-500 uppercase">Finished</span>
+</div>
+</div>
+<span class="text-xs font-bold text-primary">1,420</span>
+</div>
+<!-- Ranking Item -->
+<div class="flex items-center justify-between p-3 rounded-lg border border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold w-4 text-center">2</span>
+<div class="w-8 h-8 rounded-full bg-cover bg-center" data-alt="Leaderboard user profile avatar" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC2BdEVQwueWpfv-OgCkrEjDoLkiocC9pNZqGLzWADMCRvqBBy0HyHqMBK0afme-haLUZtEa-uAykTcCCin6hWJrm8Xc46Hw8hSGksVVDA_Ol-2tvtA9ti8d16FJ0Gvv9KiR9y3VWG1aZIdLu9PX1ShA70yIQbGqer-RlvDOwKt-kzs9hiCTbXVNZN12uytlfCQz33Upztzo6lEU4KSg4wPvVVWHxMaVrYaVEfxWUBFPGMjgaWsUz8z0D66aHw0Hwirtx0AyN-pA3A')"></div>
+<div class="flex flex-col">
+<span class="text-xs font-bold">Sarah J.</span>
+<span class="text-[10px] text-slate-500 uppercase">Finished</span>
+</div>
+</div>
+<span class="text-xs font-bold">1,385</span>
+</div>
+<!-- Current User Ranking -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-primary/10 border border-primary/20">
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold w-4 text-center text-primary italic">YOU</span>
+<div class="w-8 h-8 rounded-full bg-cover bg-center border border-primary/40 shadow-sm" data-alt="Current user profile avatar" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCA06YzVCYY8O8MiHmXAdiH8wjMNIsB4STyF1LOyKbmsvrK5fU0JuTPxouzhbiuVXWGgn__f_WIHcCEiyTUrZdL6Q-lMNyrSS9CH5BVCI-LWkayGI58rS-0UNYegREAZWLG7yPI_qe5AChp3EPZVljkAONg8HkjtSltPHgGC7ZFn3LCtv4LUuzm-KwFN7Tx0XNx7d5JhkeJ7TIeB9cLwZyX3mDe4ZiqgHoGmzsr-OZO4abqlL2HIHo7_KR2R2-aOnTNum_8lJ1kXwE')"></div>
+<div class="flex flex-col">
+<span class="text-xs font-bold">Your Progress</span>
+<span class="text-[10px] text-primary font-medium uppercase">Answering...</span>
+</div>
+</div>
+<span class="text-xs font-bold text-primary italic">~1,250</span>
+</div>
+<!-- Ranking Item -->
+<div class="flex items-center justify-between p-3 rounded-lg border border-transparent opacity-50">
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold w-4 text-center">4</span>
+<div class="w-8 h-8 rounded-full bg-cover bg-center" data-alt="Leaderboard user profile avatar" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDjzXSrMXmSZa1YFo2itkjuG2nSu_U1FnC-koZSk8T_NQzlsQGkszCZv-bHh1Leg5RZyTBh5oVXxqRf0qvoTgfI8kqwhmgUKjh0OyEgMydx-YU_o6qroifmUT6AC4E7t1q2w1vW3MQBIrVEpI-7cMLNf9pNQc3G4aN_IP6U0J-NGB3nRc8ZwGfyO6mp4w_flDWKSkRG1fgyYUB_xqLd6uWJbOaaitZLylFfys1falnuS0uhvMwLEYmcWYiatdVJBk6IttzwQjHmId0')"></div>
+<div class="flex flex-col">
+<span class="text-xs font-bold">Marcus V.</span>
+<span class="text-[10px] text-slate-500 uppercase">Reading...</span>
+</div>
+</div>
+<span class="text-xs font-bold">—</span>
+</div>
+</div>
+<button class="p-3 text-[11px] font-bold text-slate-500 hover:text-primary transition-colors uppercase tracking-widest border-t border-slate-200 dark:border-slate-800">
+                        View Full Leaderboard
+                    </button>
+</div>
+<!-- Accuracy Tips -->
+<div class="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-xl p-4">
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-amber-500">lightbulb</span>
+<div class="space-y-1">
+<h5 class="text-xs font-bold text-amber-800 dark:text-amber-200">Pro Tip</h5>
+<p class="text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">Accuracy is weighted 2x more than speed in the final ranking. Take your time with the tricky questions!</p>
+</div>
+</div>
+</div>
+</aside>
+</main>
+</div>
+
+```</body></html>
