@@ -1,27 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, Settings2, User, Bell, Shield, Paintbrush, Database, Save, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { BookOpen, User, Shield, Save, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
-export default function SettingsPage() {
+export default function AccountPage() {
     const supabase = createClient();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [user, setUser] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState("Preferences");
+    const [activeTab, setActiveTab] = useState("Personal Info");
 
     const [profile, setProfile] = useState({
         display_name: "",
         age: "",
-        reading_level: "intermediate",
-        base_wpm: 250,
-        preferred_mode: "word",
-        adaptive_difficulty: true,
     });
 
     useEffect(() => {
@@ -43,10 +39,6 @@ export default function SettingsPage() {
                 setProfile({
                     display_name: data.display_name || "",
                     age: data.age?.toString() || "",
-                    reading_level: data.reading_level || "intermediate",
-                    base_wpm: data.base_wpm || 250,
-                    preferred_mode: data.preferred_mode || "word",
-                    adaptive_difficulty: data.adaptive_difficulty ?? true,
                 });
             }
             setLoading(false);
@@ -65,10 +57,6 @@ export default function SettingsPage() {
             .update({
                 display_name: profile.display_name,
                 age: profile.age ? parseInt(profile.age) : null,
-                reading_level: profile.reading_level,
-                base_wpm: profile.base_wpm,
-                preferred_mode: profile.preferred_mode,
-                adaptive_difficulty: profile.adaptive_difficulty,
                 updated_at: new Date().toISOString(),
             })
             .eq("id", user.id);
@@ -106,12 +94,10 @@ export default function SettingsPage() {
 
             <main className="flex-1 max-w-5xl w-full mx-auto p-6 md:p-10 flex flex-col md:flex-row gap-12">
                 <aside className="w-full md:w-64 shrink-0">
-                    <h1 className="text-3xl font-black mb-8 px-4">Settings</h1>
+                    <h1 className="text-3xl font-black mb-8 px-4">Account</h1>
                     <nav className="flex flex-row md:flex-col gap-1 overflow-x-auto pb-4 md:pb-0">
                         {[
-                            { icon: Settings2, label: 'Preferences' },
-                            { icon: Paintbrush, label: 'Appearance' },
-                            { icon: Bell, label: 'Notifications' },
+                            { icon: User, label: 'Personal Info' },
                             { icon: Shield, label: 'Security' }
                         ].map((item, idx) => (
                             <button
@@ -127,70 +113,46 @@ export default function SettingsPage() {
 
                 <div className="flex-1 max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-
-
-                    {activeTab === 'Preferences' && (
+                    {activeTab === 'Personal Info' && (
                         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
                             <div className="p-8 border-b border-slate-200 dark:border-slate-800">
-                                <h2 className="text-xl font-black">Reading Preferences</h2>
-                                <p className="text-sm text-slate-500 mt-1">Fine-tune your speed reading defaults.</p>
+                                <h2 className="text-xl font-black">Personal Information</h2>
+                                <p className="text-sm text-slate-500 mt-1">Update your personal details and how you're seen in the community.</p>
                             </div>
 
                             <div className="p-8 space-y-8">
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center">
-                                        <label className="text-sm font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider">Default Speed (WPM)</label>
-                                        <span className="text-2xl font-black text-blue-600">{profile.base_wpm}</span>
-                                    </div>
-                                    <input
-                                        type="range"
-                                        min="50"
-                                        max="1000"
-                                        step="10"
-                                        value={profile.base_wpm}
-                                        onChange={(e) => setProfile({ ...profile, base_wpm: parseInt(e.target.value) })}
-                                        className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                                    />
-                                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase">
-                                        <span>50 WPM</span>
-                                        <span>500 WPM</span>
-                                        <span>1000 WPM</span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <label className="text-sm font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider">Default Mode</label>
-                                    <div className="grid grid-cols-3 gap-3">
-                                        {[
-                                            { id: 'word', label: 'Word' },
-                                            { id: 'sentence', label: 'Sentence' },
-                                            { id: 'paragraph', label: 'Paragraph' }
-                                        ].map((m) => (
-                                            <button
-                                                key={m.id}
-                                                onClick={() => setProfile({ ...profile, preferred_mode: m.id })}
-                                                className={`py-3 px-4 border-2 rounded-2xl font-bold transition-all ${profile.preferred_mode === m.id ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-600 shadow-md' : 'border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600'}`}
-                                            >
-                                                {m.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-slate-100 dark:border-slate-700">
-                                    <div className="max-w-[80%]">
-                                        <h4 className="font-black text-sm uppercase tracking-tight">Adaptive Difficulty</h4>
-                                        <p className="text-xs text-slate-500 font-medium">Auto-adjust complexity based on performance.</p>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider">Full Name</label>
                                         <input
-                                            type="checkbox"
-                                            className="sr-only peer"
-                                            checked={profile.adaptive_difficulty}
-                                            onChange={(e) => setProfile({ ...profile, adaptive_difficulty: e.target.checked })}
+                                            type="text"
+                                            value={profile.display_name}
+                                            onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
+                                            className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl px-4 py-3 font-bold focus:border-blue-600 outline-none transition"
+                                            placeholder="Your name"
                                         />
-                                        <div className="w-14 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-600"></div>
-                                    </label>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider">Age</label>
+                                        <input
+                                            type="number"
+                                            value={profile.age}
+                                            onChange={(e) => setProfile({ ...profile, age: e.target.value })}
+                                            className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl px-4 py-3 font-bold focus:border-blue-600 outline-none transition"
+                                            placeholder="Your age"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider">Email Address</label>
+                                    <input
+                                        type="email"
+                                        value={user?.email}
+                                        disabled
+                                        className="w-full bg-slate-200 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-700 rounded-2xl px-4 py-3 font-bold text-slate-500 cursor-not-allowed"
+                                    />
+                                    <p className="text-[10px] font-bold text-slate-500">Email cannot be changed directly.</p>
                                 </div>
                             </div>
                         </div>
@@ -209,12 +171,12 @@ export default function SettingsPage() {
                             ) : (
                                 <Save className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                             )}
-                            {saving ? "SAVING..." : saveSuccess ? "CHANGES SAVED!" : "SAVE ALL CHANGES"}
+                            {saving ? "SAVING..." : saveSuccess ? "CHANGES SAVED!" : "SAVE ACCOUNT"}
                         </button>
 
                         {saveSuccess && (
                             <p className="text-center text-xs font-bold text-emerald-500 animate-bounce">
-                                Your profile has been updated successfully!
+                                Your account has been updated successfully!
                             </p>
                         )}
                     </div>

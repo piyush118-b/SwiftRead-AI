@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, Play, Pause, RotateCcw, FastForward, Rewind, Settings, Type, AlignLeft, ArrowLeft, Rows } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { BookOpen, Play, Pause, RotateCcw, FastForward, Rewind, Settings, Type, AlignLeft, ArrowLeft, Rows, Clock } from "lucide-react";
+import { useState, useEffect, useRef, useMemo, Fragment } from "react";
 import { createClient } from "@/utils/supabase/client";
 
 export default function TrainerPage() {
@@ -11,12 +11,50 @@ export default function TrainerPage() {
     const [wpm, setWpm] = useState(300);
     const [mode, setMode] = useState<"word" | "sentence" | "paragraph">("word");
     const [progress, setProgress] = useState(0);
+    const [seconds, setSeconds] = useState(0);
     const [sessionSaved, setSessionSaved] = useState(false);
 
     const defaultContent = "The quick brown fox jumps over the lazy dog. Reading faster requires suppressing your inner voice. This is called subvocalization. When you read this text, try not to say the words in your head. Instead, let your eyes scan the shapes of the words and your brain will automatically process the meaning. This technique takes practice but will significantly increase your reading speed and comprehension over time.";
 
     const [content, setContent] = useState(defaultContent);
-    const words = content.split(" ");
+
+    // Parse the content into words while preserving paragraph and heading structure
+    const parsedData = useMemo(() => {
+        const tokens: { text: string; newlinesBefore: number; isHeading: boolean }[] = [];
+        if (!content) return tokens;
+
+        const lines = content.split('\n');
+        let newlinesAccumulated = 0;
+
+        lines.forEach((line) => {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) {
+                newlinesAccumulated++;
+                return;
+            }
+
+            const lineWords = trimmedLine.split(/\s+/).filter(w => w.length > 0);
+
+            // Auto-detect headings: short lines, no trailing punctuation (except ? or !), separated by space
+            const isHeading = lineWords.length > 0 && lineWords.length <= 12 && !/[.,;]$/.test(lineWords[lineWords.length - 1]) && (newlinesAccumulated >= 1 || tokens.length === 0);
+
+            lineWords.forEach((word, idx) => {
+                tokens.push({
+                    text: word,
+                    newlinesBefore: idx === 0 ? newlinesAccumulated : 0,
+                    isHeading: isHeading,
+                });
+            });
+
+            newlinesAccumulated = 1;
+        });
+
+        return tokens;
+    }, [content]);
+
+    // Keep words as a string array for the core reading engine logic
+    const words = useMemo(() => parsedData.map(p => p.text), [parsedData]);
+
 
     // Mount effect to load generated text
     useEffect(() => {
@@ -26,66 +64,184 @@ export default function TrainerPage() {
         }
     }, []);
 
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
-
+    // Timer clock effect
     useEffect(() => {
+        let interval: NodeJS.Timeout;
         if (isPlaying) {
-            const delayMs = 60000 / wpm;
-            timerRef.current = setInterval(() => {
-                setCurrentIndex((prev) => {
-                    if (prev >= words.length - 1) {
-                        setIsPlaying(false);
-
-                        // Save session to database once per full read
-                        if (!sessionSaved) {
-                            setSessionSaved(true);
-                            const duration = Math.round((words.length / wpm) * 60);
-
-                            supabase.auth.getUser().then(({ data }) => {
-                                if (data?.user) {
-                                    supabase.from("reading_sessions").insert({
-                                        user_id: data.user.id,
-                                        words_read: words.length,
-                                        starting_wpm: wpm,
-                                        ending_wpm: wpm,
-                                        duration_seconds: duration
-                                    }).then(() => console.log("Session saved securely to database"));
-                                }
-                            });
-                        }
-
-                        return prev;
-                    }
-                    setProgress(((prev + 1) / words.length) * 100);
-                    return prev + 1;
-                });
-            }, delayMs);
-        } else {
-            if (timerRef.current) clearInterval(timerRef.current);
+            interval = setInterval(() => {
+                setSeconds(prev => prev + 1);
+            }, 1000);
         }
-        return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
+        return () => clearInterval(interval);
+    }, [isPlaying]);
+
+    const formatTime = (totalSeconds: number) => {
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    };
+
+    // Dynamic Speed Calculation Logic
+    const calculateDelay = (word: string, baseWpm: number) => {
+        const baseDelay = 60000 / baseWpm;
+        if (!word) return baseDelay;
+
+        // Get the real letter count (ignoring punctuation) to determine reading effort
+        const cleanLength = word.replace(/[^a-zA-Z0-9]/g, '').length;
+
+        // Smoother, less aggressive length factor for better rhythm
+        // Short words max out at 0.85x speed, longer words at 1.3x speed
+        const lengthFactor = Math.max(0.85, Math.min(1.3, 0.85 + (cleanLength * 0.03)));
+
+        // Punctuation Factor: Add pauses for natural flow
+        let puncFactor = 1.0;
+        if (/[.?!;]$/.test(word)) puncFactor = 1.5;  // End of thought
+        else if (/[,:]$/.test(word)) puncFactor = 1.25; // Brief pause
+
+        return baseDelay * lengthFactor * puncFactor;
+    };
+
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [displayWpm, setDisplayWpm] = useState(wpm.toString());
+
+    // Use refs for the animation loop to prevent React re-render lag from dropping frames
+    const stateRef = useRef({
+        index: 0,
+        lastTime: 0,
+        targetDelay: 0
+    });
+
+    // Synchronize the ref if the user skips forward/backward with arrows
+    useEffect(() => {
+        stateRef.current.index = currentIndex;
+    }, [currentIndex]);
+
+    // Timer logic using high-precision requestAnimationFrame
+    useEffect(() => {
+        let animationFrameId: number;
+
+        const loop = (time: DOMHighResTimeStamp) => {
+            if (!isPlaying) return;
+
+            if (stateRef.current.lastTime === 0 || stateRef.current.targetDelay === 0) {
+                stateRef.current.lastTime = time;
+                stateRef.current.targetDelay = calculateDelay(words[stateRef.current.index], wpm);
+            }
+
+            const elapsed = time - stateRef.current.lastTime;
+
+            if (elapsed >= stateRef.current.targetDelay) {
+                const nextIdx = stateRef.current.index + 1;
+
+                if (nextIdx >= words.length) {
+                    setIsPlaying(false);
+                    if (!sessionSaved) {
+                        setSessionSaved(true);
+                        const duration = Math.round((words.length / wpm) * 60);
+                        supabase.auth.getUser().then(({ data }) => {
+                            if (data?.user) {
+                                supabase.from("reading_sessions").insert({
+                                    user_id: data.user.id,
+                                    words_read: words.length,
+                                    starting_wpm: wpm,
+                                    ending_wpm: wpm,
+                                    duration_seconds: duration
+                                }).then(() => console.log("Session saved"));
+                            }
+                        });
+                    }
+                    return;
+                }
+
+                // Prevent time slippage by carrying over the remainder milliseconds
+                stateRef.current.lastTime = time - (elapsed - stateRef.current.targetDelay);
+                stateRef.current.index = nextIdx;
+                stateRef.current.targetDelay = calculateDelay(words[nextIdx], wpm);
+
+                setCurrentIndex(nextIdx);
+                setProgress(((nextIdx + 1) / words.length) * 100);
+            }
+
+            animationFrameId = requestAnimationFrame(loop);
         };
-    }, [isPlaying, wpm, words.length, sessionSaved, supabase]);
+
+        if (isPlaying) {
+            stateRef.current.lastTime = 0; // Reset time immediately on play
+            animationFrameId = requestAnimationFrame(loop);
+        }
+
+        return () => cancelAnimationFrame(animationFrameId);
+    }, [isPlaying, wpm, words, sessionSaved]);
+
+
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const activeWordRef = useRef<HTMLSpanElement>(null);
 
-    // Auto-scroll to active word
+    // Auto-scroll logic optimized for high speed
     useEffect(() => {
-        if (activeWordRef.current && scrollContainerRef.current) {
-            activeWordRef.current.scrollIntoView({
-                behavior: "smooth",
-                block: "center",
-            });
+        if (activeWordRef.current && scrollContainerRef.current && mode !== "word") {
+            const container = scrollContainerRef.current;
+            const element = activeWordRef.current;
+
+            const containerRect = container.getBoundingClientRect();
+            const elementRect = element.getBoundingClientRect();
+
+            // Only scroll if outside the middle 40% of the viewport to reduce jitter
+            const overflowTop = elementRect.top < containerRect.top + containerRect.height * 0.3;
+            const overflowBottom = elementRect.bottom > containerRect.bottom - containerRect.height * 0.3;
+
+            if (overflowTop || overflowBottom) {
+                element.scrollIntoView({
+                    behavior: wpm > 400 ? "auto" : "smooth",
+                    block: "center",
+                });
+            }
         }
-    }, [currentIndex, mode]);
+    }, [currentIndex, mode, wpm]);
+
+
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.code === "Space") {
+                e.preventDefault();
+                setIsPlaying(prev => !prev);
+            } else if (e.code === "ArrowLeft") {
+                e.preventDefault();
+                setCurrentIndex(prev => Math.max(0, prev - 5));
+                setProgress((Math.max(0, currentIndex - 5) / words.length) * 100);
+            } else if (e.code === "ArrowRight") {
+                e.preventDefault();
+                setCurrentIndex(prev => Math.min(words.length - 1, prev + 5));
+                setProgress((Math.min(words.length - 1, currentIndex + 5) / words.length) * 100);
+            } else if (e.code === "ArrowUp") {
+                e.preventDefault();
+                setWpm(prev => {
+                    const next = Math.min(1000, prev + 10);
+                    setDisplayWpm(next.toString());
+                    return next;
+                });
+            } else if (e.code === "ArrowDown") {
+                e.preventDefault();
+                setWpm(prev => {
+                    const next = Math.max(50, prev - 10);
+                    setDisplayWpm(next.toString());
+                    return next;
+                });
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [currentIndex, words.length]);
+
 
     const handleRestart = () => {
         setIsPlaying(false);
         setCurrentIndex(0);
         setProgress(0);
+        setSeconds(0);
         setSessionSaved(false);
     };
 
@@ -101,7 +257,11 @@ export default function TrainerPage() {
                         <span className="font-semibold text-slate-300">Session: Reading Trainer</span>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="text-sm font-bold bg-slate-800 px-3 py-1.5 rounded-lg text-emerald-400">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 rounded-lg border border-slate-700">
+                            <Clock className="w-4 h-4 text-blue-400" />
+                            <span className="text-sm font-mono font-bold text-slate-200">{formatTime(seconds)}</span>
+                        </div>
+                        <div className="text-sm font-bold bg-slate-800 px-3 py-1.5 rounded-lg text-emerald-400 border border-slate-700">
                             {wpm} WPM
                         </div>
                         <button className="text-slate-400 hover:text-white transition">
@@ -148,36 +308,44 @@ export default function TrainerPage() {
                     )}
 
                     {mode === "sentence" && (
-                        <div className="text-2xl md:text-4xl font-medium leading-[1.6] text-slate-500 max-w-4xl text-center py-20">
-                            {words.map((word, idx) => (
-                                <span
-                                    key={idx}
-                                    ref={idx === currentIndex ? activeWordRef : null}
-                                    className={`inline-block mx-1.5 my-1.5 transition-all duration-200 ${idx === currentIndex ? "text-white font-black scale-110 bg-blue-600 px-2 rounded-lg shadow-xl shadow-blue-600/20" :
-                                        idx < currentIndex ? "text-slate-700" : "text-slate-400"
-                                        }`}
-                                >
-                                    {word}
-                                </span>
+                        <div className="text-2xl md:text-3xl font-semibold leading-[1.8] text-slate-500 max-w-4xl text-center py-20">
+                            {parsedData.map((w, idx) => (
+                                <Fragment key={idx}>
+                                    {w.newlinesBefore > 1 && <><br /><br /></>}
+                                    {w.newlinesBefore === 1 && idx > 0 && <br />}
+                                    <span
+                                        ref={idx === currentIndex ? activeWordRef : null}
+                                        className={`inline-block mx-2 my-1 transition-all duration-150 rounded-md ${idx === currentIndex ? "text-white bg-blue-600 scale-125 shadow-2xl shadow-blue-600/40 z-10 relative" :
+                                            idx < currentIndex ? "text-slate-700/50" : "text-slate-500"
+                                            } ${w.isHeading && idx >= currentIndex ? "text-slate-300 font-bold" : ""}`}
+                                        style={{ padding: '0 4px' }}
+                                    >
+                                        {w.text}
+                                    </span>
+                                </Fragment>
                             ))}
                         </div>
                     )}
 
                     {mode === "paragraph" && (
-                        <div className="text-xl md:text-2xl font-normal leading-relaxed text-slate-400 max-w-3xl text-left py-10">
-                            {words.map((word, idx) => (
-                                <span
-                                    key={idx}
-                                    ref={idx === currentIndex ? activeWordRef : null}
-                                    className={`inline-block mx-1 my-0.5 transition-colors ${idx === currentIndex ? "text-blue-500 font-bold underline decoration-2 underline-offset-4" :
-                                        idx < currentIndex ? "text-slate-700" : ""
-                                        }`}
-                                >
-                                    {word}
-                                </span>
+                        <div className="text-lg md:text-xl font-normal leading-loose text-slate-400 max-w-3xl w-full text-left py-10">
+                            {parsedData.map((w, idx) => (
+                                <Fragment key={idx}>
+                                    {w.newlinesBefore > 1 && <><br /><br /></>}
+                                    {w.newlinesBefore === 1 && idx > 0 && <br />}
+                                    <span
+                                        ref={idx === currentIndex ? activeWordRef : null}
+                                        className={`inline-block mx-1 transition-all duration-150 rounded ${idx === currentIndex ? "text-slate-100 bg-blue-600 font-bold scale-[1.12] shadow-lg shadow-blue-500/30 z-10 relative px-1 -mx-[3px]" :
+                                            idx < currentIndex ? "text-slate-600" : ""
+                                            } ${w.isHeading ? "font-black text-2xl md:text-3xl text-slate-200 tracking-tight" : ""}`}
+                                    >
+                                        {w.text}
+                                    </span>
+                                </Fragment>
                             ))}
                         </div>
                     )}
+
                 </div>
 
 
@@ -189,62 +357,89 @@ export default function TrainerPage() {
 
                     {/* Mode Selector */}
                     <div className="flex items-center gap-2 bg-slate-800 p-1 rounded-xl">
-                        <button
-                            onClick={() => setMode("word")}
-                            className={`p-2 rounded-lg transition ${mode === "word" ? "bg-slate-700 text-white shadow" : "text-slate-400 hover:text-white"}`}
-                            title="Word Flash Mode"
-                        >
-                            <Type className="w-5 h-5" />
-                        </button>
-                        <button
-                            onClick={() => setMode("sentence")}
-                            className={`p-2 rounded-lg transition ${mode === "sentence" ? "bg-slate-700 text-white shadow" : "text-slate-400 hover:text-white"}`}
-                            title="Sentence Mode"
-                        >
-                            <AlignLeft className="w-5 h-5" />
-                        </button>
-                        <button
-                            onClick={() => setMode("paragraph")}
-                            className={`p-2 rounded-lg transition ${mode === "paragraph" ? "bg-slate-700 text-white shadow" : "text-slate-400 hover:text-white"}`}
-                            title="Paragraph Mode"
-                        >
-                            <Rows className="w-5 h-5" />
-                        </button>
+                        {[
+                            { id: 'word', icon: Type, label: 'Word Flash' },
+                            { id: 'sentence', icon: AlignLeft, label: 'Sentence Mode' },
+                            { id: 'paragraph', icon: Rows, label: 'Paragraph Mode' }
+                        ].map((m) => (
+                            <div key={m.id} className="group relative flex justify-center">
+                                <button
+                                    onClick={() => setMode(m.id as any)}
+                                    className={`p-2 rounded-lg transition ${mode === m.id ? "bg-slate-700 text-white shadow" : "text-slate-400 hover:text-white"}`}
+                                >
+                                    <m.icon className="w-5 h-5" />
+                                </button>
+                                <div className="absolute bottom-full mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-slate-700 shadow-xl z-[60]">
+                                    {m.label}
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
 
                     {/* Playback Controls */}
                     <div className="flex items-center gap-6">
-                        <button onClick={handleRestart} className="text-slate-400 hover:text-white transition">
-                            <RotateCcw className="w-6 h-6" />
-                        </button>
-                        <button
-                            onClick={() => {
-                                setCurrentIndex(prev => Math.max(0, prev - 5));
-                                setProgress((Math.max(0, currentIndex - 5) / words.length) * 100);
-                            }}
-                            className="text-slate-400 hover:text-white transition"
-                        >
-                            <Rewind className="w-6 h-6" />
-                        </button>
+                        <div className="group relative flex justify-center">
+                            <button
+                                onClick={handleRestart}
+                                className="text-slate-400 hover:text-white transition"
+                            >
+                                <RotateCcw className="w-6 h-6" />
+                            </button>
+                            <div className="absolute bottom-full mb-3 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-slate-700 shadow-xl z-[60]">
+                                Restart
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                            </div>
+                        </div>
 
-                        <button
-                            onClick={() => setIsPlaying(!isPlaying)}
-                            className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-600/20 transition-transform active:scale-95"
-                        >
-                            {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
-                        </button>
+                        <div className="group relative flex justify-center">
+                            <button
+                                onClick={() => {
+                                    setCurrentIndex(prev => Math.max(0, prev - 5));
+                                    setProgress((Math.max(0, currentIndex - 5) / words.length) * 100);
+                                }}
+                                className="text-slate-400 hover:text-white transition"
+                            >
+                                <Rewind className="w-6 h-6" />
+                            </button>
+                            <div className="absolute bottom-full mb-3 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-slate-700 shadow-xl z-[60]">
+                                Rewind 5 Words (←)
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                            </div>
+                        </div>
 
-                        <button
-                            onClick={() => {
-                                setCurrentIndex(prev => Math.min(words.length - 1, prev + 5));
-                                setProgress((Math.min(words.length - 1, currentIndex + 5) / words.length) * 100);
-                            }}
-                            className="text-slate-400 hover:text-white transition"
-                        >
-                            <FastForward className="w-6 h-6" />
-                        </button>
+                        <div className="group relative flex justify-center">
+                            <button
+                                onClick={() => setIsPlaying(!isPlaying)}
+                                className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-600/20 transition-transform active:scale-95"
+                            >
+                                {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
+                            </button>
+                            <div className="absolute bottom-full mb-4 px-2 py-1 bg-blue-600 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl z-[60]">
+                                {isPlaying ? "Pause (Space)" : "Play (Space)"}
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-blue-600"></div>
+                            </div>
+                        </div>
+
+                        <div className="group relative flex justify-center">
+                            <button
+                                onClick={() => {
+                                    setCurrentIndex(prev => Math.min(words.length - 1, prev + 5));
+                                    setProgress((Math.min(words.length - 1, currentIndex + 5) / words.length) * 100);
+                                }}
+                                className="text-slate-400 hover:text-white transition"
+                            >
+                                <FastForward className="w-6 h-6" />
+                            </button>
+                            <div className="absolute bottom-full mb-3 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-slate-700 shadow-xl z-[60]">
+                                Forward 5 Words (→)
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                            </div>
+                        </div>
                     </div>
+
+
 
                     {/* Speed Control */}
                     <div className="flex items-center gap-4 w-full md:w-auto">
@@ -252,24 +447,34 @@ export default function TrainerPage() {
                         <div className="flex items-center gap-3">
                             <input
                                 type="range"
-                                min="100"
+                                min="50"
                                 max="1000"
                                 step="10"
                                 value={wpm}
-                                onChange={(e) => setWpm(parseInt(e.target.value))}
+                                onChange={(e) => {
+                                    const val = parseInt(e.target.value);
+                                    setWpm(val);
+                                    setDisplayWpm(val.toString());
+                                }}
                                 className="w-32 md:w-48 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
                             />
                             <input
                                 type="number"
-                                min="100"
+                                min="50"
                                 max="1000"
-                                value={wpm}
-                                onChange={(e) => {
-                                    const val = parseInt(e.target.value);
-                                    if (!isNaN(val)) setWpm(Math.min(1000, Math.max(100, val)));
+                                value={displayWpm}
+                                onChange={(e) => setDisplayWpm(e.target.value)}
+                                onBlur={() => {
+                                    const val = parseInt(displayWpm);
+                                    if (!isNaN(val)) {
+                                        const clamped = Math.min(1000, Math.max(50, val));
+                                        setWpm(clamped);
+                                        setDisplayWpm(clamped.toString());
+                                    }
                                 }}
                                 className="w-20 px-2 py-1 bg-slate-800 border border-slate-700 rounded-lg text-sm font-bold text-emerald-400 focus:outline-none focus:border-blue-500 transition-colors"
                             />
+
                         </div>
                     </div>
 

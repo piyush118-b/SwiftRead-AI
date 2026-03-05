@@ -128,9 +128,9 @@ export default function DashboardPage() {
                         <Link href="/settings" className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                             <Settings className="w-5 h-5" />
                         </Link>
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 text-white flex items-center justify-center font-bold text-sm shadow-md border-2 border-white dark:border-slate-800">
+                        <Link href="/account" className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 text-white flex items-center justify-center font-bold text-sm shadow-md border-2 border-white dark:border-slate-800 hover:scale-105 transition-transform cursor-pointer">
                             {initials}
-                        </div>
+                        </Link>
                     </div>
                 </div>
             </nav>

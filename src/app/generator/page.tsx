@@ -230,24 +230,59 @@ export default function GeneratorPage() {
                         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
 
                         <div className="relative z-10">
-                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Generated Prompt</h3>
-                            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner font-mono text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                                <span className="text-blue-500">System:</span> Generate a reading practice text about <span className="text-emerald-500 font-bold">"{topic || '...'}"</span>.
-                                <br /><br />
-                                <span className="text-blue-500">Parameters:</span><br />
-                                - Difficulty: <span className="text-emerald-500">{difficulty}</span><br />
-                                - Length: <span className="text-emerald-500">{length}</span><br />
-                                - Tone: <span className="text-emerald-500">{tone}</span><br />
-                                <br />
-                                <span className="text-blue-500">Constraint:</span> Format output clearly without markdown headers, ensuring text flows continuously for speed reading extraction.
-                            </div>
+                            {activeTab === "ai" ? (
+                                <>
+                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Generated Prompt</h3>
+                                    <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner font-mono text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                                        <span className="text-blue-500">System:</span> Generate a reading practice text about <span className="text-emerald-500 font-bold">"{topic || '...'}"</span>.
+                                        <br /><br />
+                                        <span className="text-blue-500">Parameters:</span><br />
+                                        - Difficulty: <span className="text-emerald-500">{difficulty}</span><br />
+                                        - Length: <span className="text-emerald-500">{length}</span><br />
+                                        - Tone: <span className="text-emerald-500">{tone}</span><br />
+                                        <br />
+                                        <span className="text-blue-500">Constraint:</span> Format output clearly without markdown headers, ensuring text flows continuously for speed reading extraction.
+                                    </div>
 
-                            <div className="mt-8 flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30">
-                                <Brain className="w-6 h-6 text-blue-600 shrink-0" />
-                                <p className="text-sm text-blue-800 dark:text-blue-300 font-medium">
-                                    A quick comprehension quiz will be automatically generated based on the text to test your retention afterward.
-                                </p>
-                            </div>
+                                    <div className="mt-8 flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30">
+                                        <Brain className="w-6 h-6 text-blue-600 shrink-0" />
+                                        <p className="text-sm text-blue-800 dark:text-blue-300 font-medium">
+                                            A quick comprehension quiz will be automatically generated based on the text to test your retention afterward.
+                                        </p>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Custom Text Tips</h3>
+
+                                    <div className="space-y-6">
+                                        <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                                            <h4 className="font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                                                <BookOpen className="w-4 h-4 text-blue-500" /> Optimal Length
+                                            </h4>
+                                            <p className="text-sm text-slate-500 leading-relaxed">
+                                                For the best training experience, paste at least 500 words to let the speed reading engine calibrate to your rhythm.
+                                            </p>
+                                        </div>
+
+                                        <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                                            <h4 className="font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                                                <Sparkles className="w-4 h-4 text-emerald-500" /> Clean Formatting
+                                            </h4>
+                                            <p className="text-sm text-slate-500 leading-relaxed">
+                                                Remove excessive line breaks or code blocks before pasting. Our engine parses standard whitespace automatically.
+                                            </p>
+                                        </div>
+
+                                        <div className="mt-8 flex items-start gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-900/30 transition-all hover:scale-105">
+                                            <Brain className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
+                                            <p className="text-sm text-emerald-800 dark:text-emerald-300 font-medium">
+                                                Your performance with custom text will still track normally and count towards your total words read!
+                                            </p>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
