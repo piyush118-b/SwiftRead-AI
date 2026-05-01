@@ -14,7 +14,7 @@ export default function TrainerPage() {
     const [seconds, setSeconds] = useState(0);
     const [sessionSaved, setSessionSaved] = useState(false);
 
-    const defaultContent = "The quick brown fox jumps over the lazy dog. Reading faster requires suppressing your inner voice. This is called subvocalization. When you read this text, try not to say the words in your head. Instead, let your eyes scan the shapes of the words and your brain will automatically process the meaning. This technique takes practice but will significantly increase your reading speed and comprehension over time.";
+    const defaultContent = "Shadow Reading Practice\n\nWelcome to your shadow reading training. The logic behind this method is based on active repetition. By continuously hearing and mimicking these phrases, you will perfect your pronunciation, improve your intonation, and expand your vocabulary.\n\nMahatma Gandhi\n\nMohandas Karamchand Gandhi was one of the most remarkable leaders of the 20th century. Born in Porbandar, India, he developed the philosophy of nonviolent resistance. This philosophy not only led India to independence but also inspired civil rights movements across the globe.\n\nAs you read this text, try to echo the words out loud. Follow the active highlight, letting your voice trail slightly behind the leading edge. This active participation will dramatically improve your English fluency and speaking confidence.";
 
     const [content, setContent] = useState(defaultContent);
 
@@ -82,9 +82,12 @@ export default function TrainerPage() {
     };
 
     // Dynamic Speed Calculation Logic
-    const calculateDelay = (word: string, baseWpm: number) => {
+    const calculateDelay = (idx: number, baseWpm: number) => {
+        const item = parsedData[idx];
         const baseDelay = 60000 / baseWpm;
-        if (!word) return baseDelay;
+        if (!item) return baseDelay;
+
+        const word = item.text;
 
         // Get the real letter count (ignoring punctuation) to determine reading effort
         const cleanLength = word.replace(/[^a-zA-Z0-9]/g, '').length;
@@ -98,7 +101,19 @@ export default function TrainerPage() {
         if (/[.?!;]$/.test(word)) puncFactor = 1.5;  // End of thought
         else if (/[,:]$/.test(word)) puncFactor = 1.25; // Brief pause
 
-        return baseDelay * lengthFactor * puncFactor;
+        // Structural Factor: Simulating human eye movements and breathing
+        let structuralFactor = 1.0;
+        const nextItem = parsedData[idx + 1];
+        if (nextItem && nextItem.newlinesBefore > 0) {
+            // Massive pause at the end of a paragraph (simulating the physical time it takes for human eyes to track back to the left margin and take a breath)
+            structuralFactor = 1.0 + (nextItem.newlinesBefore * 0.85); // 1 newline = 1.85x, 2 newlines = 2.7x delay
+        }
+
+        if (item.isHeading) {
+            structuralFactor *= 1.25; // Headings are read naturally slower for maximum context absorption
+        }
+
+        return baseDelay * lengthFactor * puncFactor * structuralFactor;
     };
 
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -125,7 +140,7 @@ export default function TrainerPage() {
 
             if (stateRef.current.lastTime === 0 || stateRef.current.targetDelay === 0) {
                 stateRef.current.lastTime = time;
-                stateRef.current.targetDelay = calculateDelay(words[stateRef.current.index], wpm);
+                stateRef.current.targetDelay = calculateDelay(stateRef.current.index, wpm);
             }
 
             const elapsed = time - stateRef.current.lastTime;
@@ -156,7 +171,7 @@ export default function TrainerPage() {
                 // Prevent time slippage by carrying over the remainder milliseconds
                 stateRef.current.lastTime = time - (elapsed - stateRef.current.targetDelay);
                 stateRef.current.index = nextIdx;
-                stateRef.current.targetDelay = calculateDelay(words[nextIdx], wpm);
+                stateRef.current.targetDelay = calculateDelay(nextIdx, wpm);
 
                 setCurrentIndex(nextIdx);
                 setProgress(((nextIdx + 1) / words.length) * 100);
@@ -329,20 +344,32 @@ export default function TrainerPage() {
 
                     {mode === "paragraph" && (
                         <div className="text-lg md:text-xl font-normal leading-loose text-slate-400 max-w-3xl w-full text-left py-10">
-                            {parsedData.map((w, idx) => (
-                                <Fragment key={idx}>
-                                    {w.newlinesBefore > 1 && <><br /><br /></>}
-                                    {w.newlinesBefore === 1 && idx > 0 && <br />}
-                                    <span
-                                        ref={idx === currentIndex ? activeWordRef : null}
-                                        className={`inline-block mx-1 transition-all duration-150 rounded ${idx === currentIndex ? "text-slate-100 bg-blue-600 font-bold scale-[1.12] shadow-lg shadow-blue-500/30 z-10 relative px-1 -mx-[3px]" :
-                                            idx < currentIndex ? "text-slate-600" : ""
-                                            } ${w.isHeading ? "font-black text-2xl md:text-3xl text-slate-200 tracking-tight" : ""}`}
-                                    >
-                                        {w.text}
-                                    </span>
-                                </Fragment>
-                            ))}
+                            {parsedData.map((w, idx) => {
+                                // Determine the visual shadow trail intensity
+                                const isCurrent = idx === currentIndex;
+                                const isShadow1 = idx === currentIndex - 1;
+                                const isShadow2 = idx === currentIndex - 2;
+                                const isPast = idx < currentIndex - 2;
+
+                                let highlightClass = "";
+                                if (isCurrent) highlightClass = "text-white bg-blue-600 font-bold scale-[1.12] shadow-lg shadow-blue-500/30 z-20 relative px-1 -mx-[3px]";
+                                else if (isShadow1) highlightClass = "text-blue-100 bg-blue-600/70 font-semibold scale-[1.05] z-10 relative px-0.5 -mx-[1px]";
+                                else if (isShadow2) highlightClass = "text-blue-200 bg-blue-600/30 z-0 relative";
+                                else if (isPast) highlightClass = "text-slate-600";
+
+                                return (
+                                    <Fragment key={idx}>
+                                        {w.newlinesBefore > 1 && <><br /><br /></>}
+                                        {w.newlinesBefore === 1 && idx > 0 && <br />}
+                                        <span
+                                            ref={isCurrent ? activeWordRef : null}
+                                            className={`inline-block mx-1 transition-all duration-300 rounded ${highlightClass} ${w.isHeading ? "font-black text-2xl md:text-3xl text-slate-200 tracking-tight" : ""}`}
+                                        >
+                                            {w.text}
+                                        </span>
+                                    </Fragment>
+                                );
+                            })}
                         </div>
                     )}
 
